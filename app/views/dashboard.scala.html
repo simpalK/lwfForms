@@ -1,0 +1,68 @@
+@import play.api.libs.json.Json
+@(style: String = "scala", nutrient: play.api.data.Form[models.domain.NutrientsPlotInfo],allPlots: Seq[models.domain.beo.Plot], allPers: Seq[models.domain.beo.Person])(implicit messages: Messages)
+
+@defining(play.core.PlayVersion.current) { version =>
+
+<link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/main.css")" type="text/css">
+<script src="//handsontable.com/dist/handsontable.full.js"></script>
+<link rel="stylesheet" media="screen" href="//handsontable.com/dist/handsontable.full.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+
+<div id="content" class="wrapper">
+
+<article>
+        <h1>Welcome to LWF BGC Form</h1>
+        <p>
+            Migrating the Oracle forms to web interface forms....
+        </p>
+        <blockquote>
+        <p>
+            BGC Form
+        </p>
+        </blockquote>
+    <div class="container" id ="nutrient_form">
+
+        @helper.repeat(nutrient("nutrients"), min = 1) { stayField =>
+        <div id="groupNutrientField">
+            @helper.select(field = nutrient("stayField.clnr"),  options=allPlots.map(pl => pl.clnr.toString -> pl.clusterName), '_label ->"LWF- Fläch")
+            @helper.inputDate(nutrient("stayField.probdat"), '_label ->"Probedatum")
+            @helper.inputText(nutrient("stayField.witterung"), '_label -> "Witterung")
+            @helper.select(field = nutrient("stayField.besteiger_nr"),  options=allPers.map(pl => pl.persnr.toString -> (pl.name + "," + pl.vorname)), '_label ->"Besteiger Nr 1")
+            @helper.select(field = nutrient("stayField.protokoll_nr"),  options=allPers.map(pl => pl.persnr.toString -> (pl.name + "," + pl.vorname)), '_label ->"Protokoll Nr 1")
+            @helper.select(field = nutrient("stayField.besteiger_nr2"),  options=allPers.map(pl => pl.persnr.toString -> (pl.name + "," + pl.vorname)), '_label ->"Besteiger Nr 2")
+            @helper.select(field = nutrient("stayField.protokoll_nr2"),  options=allPers.map(pl => pl.persnr.toString -> (pl.name + "," + pl.vorname)), '_label ->"Besteiger Nr 2")
+            @helper.textarea(nutrient("stayField.bemerkung"), args = 'rows -> 3, 'cols -> 50, '_label -> "Bemerkung")
+        </div>
+
+        }
+
+        <!--@helper.form(routes.HomeController.nutrients){
+        //@helper.inputText(nutrient("name"))-->
+        }
+
+     <p>
+
+
+
+ </article>
+
+ <aside>
+   <h3>Browse</h3>
+   <ul>
+     <li><a href="http://www.wsl.ch/info/organisation/fpo/lwf/index_EN">LWF Home Page</a></li>
+   </ul>
+   <h3>Download here</h3>
+   <ul>
+     <li><a id="getcsvAnchor" href="#">Click here to download the Data from chart</a></li>
+     <li><a href="https://playframework.com/documentation/@version/IDE">Click here to download Data for one year</a></li>
+     <li><a href="https://playframework.com/download#examples">Click here to download the full data</a>
+   </ul>
+
+ </aside>
+</div>
+
+
+
+}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.14.2/math.min.js"></script>

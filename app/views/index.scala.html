@@ -4,7 +4,7 @@
  *@
 @import play.api.libs.json.Json
 
-@(nutrient: play.api.data.Form[models.domain.NutrientsPlotInfo])(implicit messages: Messages)
+@(nutrient: play.api.data.Form[models.domain.NutrientsPlotInfo], allPlots: Seq[models.domain.beo.Plot], allPers: Seq[models.domain.beo.Person])(implicit messages: Messages)
 
 @*
  * Call the `main` template with two arguments. The first
@@ -17,16 +17,6 @@
      * Get an `Html` object by calling the built-in Play welcome
      * template and passing a `String` message.
      *@
-@helper.repeat(nutrient("nutrients"), min = 4) { stayField =>
-<div id="groupNutrientField">
-
-    @helper.inputDate(nutrient("stayField.probdat"))
-    @helper.inputText(nutrient("stayField.clnr"), '_label ->"Enter a   number", 'type -> "number")
-
-</div>
-}
-    //@helper.form(routes.HomeController.nutrients){
-    //@helper.inputText(nutrient("name"))
-}
+@dashboard(style = "scala", nutrient, allPlots, allPers)
 
 }

@@ -4,7 +4,7 @@ import javax.inject.{Inject, Singleton}
 
 import akka.actor.Actor
 import models.domain.bgc.GenevaTaxonomy
-import models.services.LichenService
+import models.services.BgcService
 import models.util.FtpConnector
 import parsers.DatFileWriter
 import play.api.{Configuration, Logger}
@@ -12,7 +12,7 @@ import play.api.{Configuration, Logger}
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class SchedulerActor @Inject()(configuration: Configuration, meteoService: LichenService)(implicit ec: ExecutionContext) extends Actor {
+class SchedulerActor @Inject()(configuration: Configuration, meteoService: BgcService)(implicit ec: ExecutionContext) extends Actor {
   override def receive: Receive = {
     case "writeFile" =>  {
       writeFile()

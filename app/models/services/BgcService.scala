@@ -10,7 +10,9 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
 
-class LichenService @Inject()(lichensRepo: BgcDataRepository) {
+class BgcService @Inject()(bgcRepo: BgcDataRepository) {
 
+   def getAllPlots = bgcRepo.findAllLwfplots()
 
+   def getAllPersons = bgcRepo.findAllpersons()
 }

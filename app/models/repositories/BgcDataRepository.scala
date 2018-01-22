@@ -22,7 +22,7 @@ class BgcDataRepository  @Inject()(dbapi: DBApi) {
            |and cl.clnr = lt.lwf_clnr
            |group by lt.sitename,cl.x,cl.y,cl.z50,cl.latitude, cl.longitude,k.text,cl.clname, g.text, cl.clnr""".stripMargin).as(PlotData.parser *)}
 
-   def findAllpersons() : Seq[Person] = bgcdb.withConnection { implicit connection =>
+   def findAllpersons() : Seq[Person] = beodb.withConnection { implicit connection =>
      SQL("select persnr, name, vorname from pers").as(PersonData.parser *)}
 
    def findAllTrees(): Seq[TreeData] = bgcdb.withConnection { implicit connection =>
