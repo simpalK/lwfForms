@@ -1,5 +1,5 @@
 @import play.api.libs.json.Json
-@(style: String = "scala", nutrient: play.api.data.Form[models.domain.NutrientsPlotInfo],allPlots: Seq[models.domain.beo.Plot], allPers: Seq[models.domain.beo.Person])(implicit messages: Messages)
+@(style: String = "scala", nutrient: play.api.data.Form[models.domain.NutrientsPlotInfo],allPlots: Seq[models.domain.beo.PlotExtended], allPers: Seq[models.domain.beo.Person], alltrees: Seq[models.domain.beo.TreeData])(implicit messages: Messages)
 
 @defining(play.core.PlayVersion.current) { version =>
 
@@ -7,6 +7,7 @@
 <script src="//handsontable.com/dist/handsontable.full.js"></script>
 <link rel="stylesheet" media="screen" href="//handsontable.com/dist/handsontable.full.css">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+
 
 <div id="content" class="wrapper">
 
@@ -24,17 +25,29 @@
 
         @helper.repeat(nutrient("nutrients"), min = 1) { stayField =>
         <div id="groupNutrientField">
-            @helper.select(field = nutrient("stayField.clnr"),  options=allPlots.map(pl => pl.clnr.toString -> pl.clusterName), '_label ->"LWF- Fläch")
-            @helper.inputDate(nutrient("stayField.probdat"), '_label ->"Probedatum")
-            @helper.inputText(nutrient("stayField.witterung"), '_label -> "Witterung")
-            @helper.select(field = nutrient("stayField.besteiger_nr"),  options=allPers.map(pl => pl.persnr.toString -> (pl.name + "," + pl.vorname)), '_label ->"Besteiger Nr 1")
-            @helper.select(field = nutrient("stayField.protokoll_nr"),  options=allPers.map(pl => pl.persnr.toString -> (pl.name + "," + pl.vorname)), '_label ->"Protokoll Nr 1")
-            @helper.select(field = nutrient("stayField.besteiger_nr2"),  options=allPers.map(pl => pl.persnr.toString -> (pl.name + "," + pl.vorname)), '_label ->"Besteiger Nr 2")
-            @helper.select(field = nutrient("stayField.protokoll_nr2"),  options=allPers.map(pl => pl.persnr.toString -> (pl.name + "," + pl.vorname)), '_label ->"Besteiger Nr 2")
-            @helper.textarea(nutrient("stayField.bemerkung"), args = 'rows -> 3, 'cols -> 50, '_label -> "Bemerkung")
+            @helper.select(field = nutrient("stayField.clnr"),  options=allPlots.map(pl => pl.plot.clnr.toString -> pl.plot.clusterName), '_label ->"LWF- Fläch",  'id -> "lwfPlot")
+            @helper.inputDate(nutrient("stayField.probdat"), '_label ->"Probedatum",  'id -> "probdaturm")
+            @helper.inputText(nutrient("stayField.witterung"), '_label -> "Witterung", 'id -> "witterung")
+            @helper.select(field = nutrient("stayField.besteiger_nr"),  options=allPers.map(pl => pl.persnr.toString -> (pl.name + "," + pl.vorname)), '_label ->"Besteiger Nr 1",  'id -> "besteiger1")
+            @helper.select(field = nutrient("stayField.protokoll_nr"),  options=allPers.map(pl => pl.persnr.toString -> (pl.name + "," + pl.vorname)), '_label ->"Protokoll Nr 1",  'id -> "protokoll1")
+            @helper.select(field = nutrient("stayField.besteiger_nr2"),  options=allPers.map(pl => pl.persnr.toString -> (pl.name + "," + pl.vorname)), '_label ->"Besteiger Nr 2",  'id -> "besteiger2")
+            @helper.select(field = nutrient("stayField.protokoll_nr2"),  options=allPers.map(pl => pl.persnr.toString -> (pl.name + "," + pl.vorname)), '_label ->"Protokoll Nr 2",  'id -> "protokol2")
+            @helper.textarea(nutrient("stayField.bemerkung"), args = 'rows -> 3, 'cols -> 50, '_label -> "Bemerkung",  'id -> "bemerkung")
         </div>
 
+            <div id="treeNutrientField" class="container">
+                <pre id="example1console" class="console"></pre>
+                <div id="treeNutrients"></div>
+                <label>Trees Data</label>
+                <div id="hotTrees" class="hot handsontable htRowHeaders htColumnHeaders"></div>
+            </div>
+
+        <button name="save" id="save" class="btn btn-primary pull-right">Save</button>
+
         }
+
+
+
 
         <!--@helper.form(routes.HomeController.nutrients){
         //@helper.inputText(nutrient("name"))-->
@@ -43,8 +56,7 @@
      <p>
 
 
-
- </article>
+</article>
 
  <aside>
    <h3>Browse</h3>
@@ -66,3 +78,5 @@
 }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.14.2/math.min.js"></script>
+<script src="@routes.Assets.versioned("javascripts/bgcData.js")" type="text/javascript"></script>
+<script src="@routes.Assets.versioned("javascripts/bgcDS.js")" type="text/javascript"></script>

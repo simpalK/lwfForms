@@ -7,7 +7,8 @@ import scala.math.BigDecimal
 
 
 
-case class TreeData(banreti: Option[Int],
+case class TreeData(clnr: Int,
+                    banreti: Option[Int],
                     species: Option[String],
                     umfang: Option[BigDecimal],
                     bahoehe: Option[BigDecimal]
@@ -15,14 +16,16 @@ case class TreeData(banreti: Option[Int],
 
 object TreeData {
   val parser: RowParser[TreeData] = {
+    get[Int]("clnr")~
     get[Option[Int]]("banreti") ~
       get[Option[String]]("species") ~
       get[Option[BigDecimal]]("umfang") ~
       get[Option[BigDecimal]]("bahoehe") map {
-      case banreti ~ species ~ umfang ~ bahoehe =>
+      case clnr~banreti ~ species ~ umfang ~ bahoehe =>
       {
-        TreeData(banreti, species, umfang, bahoehe)
+        TreeData(clnr, banreti, species, umfang, bahoehe)
       }
     }
   }
 }
+

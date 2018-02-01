@@ -4,7 +4,7 @@
  *@
 @import play.api.libs.json.Json
 
-@(nutrient: play.api.data.Form[models.domain.NutrientsPlotInfo], allPlots: Seq[models.domain.beo.Plot], allPers: Seq[models.domain.beo.Person])(implicit messages: Messages)
+@(nutrient: play.api.data.Form[models.domain.NutrientsPlotInfo], allPlots: Seq[models.domain.beo.PlotExtended], allPers: Seq[models.domain.beo.Person], alltrees: Seq[models.domain.beo.TreeData])(implicit messages: Messages)
 
 @*
  * Call the `main` template with two arguments. The first
@@ -17,6 +17,6 @@
      * Get an `Html` object by calling the built-in Play welcome
      * template and passing a `String` message.
      *@
-@dashboard(style = "scala", nutrient, allPlots, allPers)
+@dashboard(style = "scala", nutrient, allPlots, allPers, alltrees)
 
 }
