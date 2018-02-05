@@ -1,10 +1,11 @@
+
 @(form: Form[(String,String)])(implicit flash: Flash)
 
 <html>
 <head>
-  <title>Test App</title>
-  <link rel="shortcut icon" type="image/png" href="@routes.Assets.at("images/favicon.png")" />
-  <link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("stylesheets/main.css")" />
+  <title>LWF Forms</title>
+    <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/main.css")" type="text/css">
+
 </head>
 <body>
 
@@ -26,11 +27,23 @@
 </p>
 }
 
-<header>
-    <a href="@routes.Application.index" id="logo">Test App</a>
-</header>
 
-@helper.form(routes.Application.authenticate) {   
+<div id="content" class="wrapper">
+
+    <article>
+
+        <h1>Welcome to LWF BGC Form</h1>
+        <p>
+            Migrating the Oracle forms to web interface forms....
+        </p>
+        <blockquote>
+            <p>
+                BGC Form
+            </p>
+        </blockquote>
+
+@helper.form(routes.HomeController.authenticate) {
+
 <h1>Sign in</h1>
 <p>
   <input type="uid" name="uid" placeholder="uid" id="uid" value="@form("uid").value">
@@ -42,6 +55,16 @@
   <button type="submit" id="loginbutton">Login</button>
 </p>
 }
+        <p>
+</article>
+
+    <aside>
+        <h3>Browse</h3>
+        <ul>
+            <li><a href="http://www.wsl.ch/info/organisation/fpo/lwf/index_EN">LWF Home Page</a></li>
+        </ul>
+    </aside>
+</div>
 
 </body>
 </html>

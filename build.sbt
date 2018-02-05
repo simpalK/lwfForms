@@ -11,7 +11,6 @@ libraryDependencies ++= Seq(jdbc, cache ,ws , "org.scalatestplus.play" %% "scala
   "com.typesafe.play" %% "anorm" % "2.5.0",
   "com.jcraft" % "jsch" % "0.1.53",
   "org.flywaydb" %% "flyway-play" % "3.1.0",
-  "com.innoq.liqid" % "ldap-connector" % "1.3",
   "com.unboundid" % "unboundid-ldapsdk" % "2.3.6"
 )
 

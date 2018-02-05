@@ -18,6 +18,7 @@
 package auth
 
 import controllers.routes
+import play.api.Logger
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc._
 
@@ -25,7 +26,7 @@ trait Security {
 
   private def username(request: RequestHeader) = request.session.get("uid")
 
-  private def onUnauthorized(request: RequestHeader) = Results.Redirect(routes.Application.login).flashing("error" -> "Please login")
+  private def onUnauthorized(request: RequestHeader) = Results.Redirect(routes.HomeController.login).flashing("error" -> "Please login")
 
   def IsAuthenticated(f: => String => Request[AnyContent] => Result) = Security.Authenticated(username, onUnauthorized) {
     uid => Action(request => f(uid)(request))
@@ -35,11 +36,14 @@ trait Security {
     Security.Authenticated(username, onUnauthorized) { uid => Action(b)(request => f(uid)(request)) }
   }
 
-  def HasRole(requiredRoles: List[String])(f: => String => Request[AnyContent] => Result) = IsAuthenticated {
+  def HasRole(requiredRoles: List[String])(f: => String => Request[AnyContent] => Result): EssentialAction = IsAuthenticated {
     uid => 
       request => 
         LDAP.getUserRoles(uid) match {
-          case Some(userRoles) if requiredRoles.intersect(userRoles).length > 0 => f(uid)(request)
+          case Some(userRoles) if requiredRoles.intersect(userRoles).length > 0 => {
+            Logger.debug(s"userRoles")
+            f(uid)(request)
+          }
           case _ => Results.Forbidden
         }
   }

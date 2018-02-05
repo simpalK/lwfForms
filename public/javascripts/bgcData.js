@@ -20,6 +20,8 @@ var allProbSektData = [];
 var allValidDefData = [];
 
 var treesDataFromTable = [];
+var treesTempDataFromTable = [];
+
 
 
 $.ajax({             type: 'GET',
@@ -89,7 +91,7 @@ var hotTreeSettings = {
               colHeaders: true,
               colHeaders: [ 'clnr','banreti','species','anker','beo_umfang','bgc_last_bhu','new_bhu','probsekt','beo_hoehe','bgc_old_entnhoehe','entnhoehe','leiter' ,'stangenschere','probzust','feld_bem','ank_datum','entnart','valbhu','valbhubem'],
               manualColumnResize: true,
-                  manualRowResize: true,
+              manualRowResize: true,
               columns: [
                    {data: 'clnr',
                     readOnly: true},
@@ -117,7 +119,7 @@ var hotTreeSettings = {
                    {data: 'leiter'},
                    {data: 'stangenschere',
                     type: 'checkbox'},
-                   {data: 'probzust'},
+                   {data: 'new_probzust'},
                    {data: 'feld_bem'},
                    {data: 'ank_datum',
                    type: 'date',
@@ -125,8 +127,6 @@ var hotTreeSettings = {
                            correctFormat: true,
                            defaultDate: '01.01.2018',
                            allowEmpty: true,
-                           // datePicker additional options (see https://github.com/dbushell/Pikaday#configuration)
-
                           },
                             {data: 'new_entnart',
                             type: 'autocomplete',
@@ -142,22 +142,22 @@ var hotTreeSettings = {
                             this.type = 'dropdown';
                             var val = this.instance.getValue();
 
-                            this.source =  hotProbzustdata; // to add to the beginning do this.source.unshift(val) instead
+                            this.source =  hotProbzustdata;
                             }
 
                          if(col === 16) {
                             this.type = 'dropdown';
-                            this.source =  hotEntartdata; // to add to the beginning do this.source.unshift(val) instead
+                            this.source =  hotEntartdata;
                             }
 
                          if(col === 17) {
                            this.type = 'dropdown';
-                           this.source =  hotValidDefData; // to add to the beginning do this.source.unshift(val) instead
+                           this.source =  hotValidDefData;
                          }
 
                          if(col === 7) {
                             this.type = 'dropdown';
-                            this.source =  hotProbSektData; // to add to the beginning do this.source.unshift(val) instead
+                            this.source =  hotProbSektData;
                             }
                          }
 
@@ -166,9 +166,60 @@ var hotTreeSettings = {
 var hotTree = new Handsontable($('#hotTrees')[0], hotTreeSettings);
 
 
+$(document).ready(function () {
+ selectedPlot = parseInt($('#lwfPlot option:selected').val());
+       refreshAllData();
+       saveTempStateOfData();
+
+})
+
+
+function saveTempStateOfData() {
+        nutrientTemporaryData.plotData.clnr =  parseInt($('#lwfPlot option:selected').val());
+        nutrientTemporaryData.plotData.probdat = $('#probdaturm').val()
+        nutrientTemporaryData.plotData.witterung =( $('#witterung').val() != "") ? ($('#witterung').val()) : undefined;
+        nutrientTemporaryData.plotData.besteiger_nr = parseInt($('#besteiger1 option:selected').val());
+        nutrientTemporaryData.plotData.protokoll_nr =  parseInt($('#protokoll1 option:selected').val());
+        nutrientTemporaryData.plotData.bemerkung = ( $('#bemerkung').val() != "") ? ($('#witterung').val()) : undefined;
+        nutrientTemporaryData.plotData.besteiger_nr2 =  parseInt($('#besteiger2 option:selected').val());
+        nutrientTemporaryData.plotData.protokoll_nr2 =  parseInt($('#protokol2 option:selected').val());
+
+        treesTempDataFromTable = hotTree.getSourceData();
+
+        nutrientTemporaryData.plotData.trees = treesTempDataFromTable.map(function(d,i) {
+
+        return {
+                clnr: d.clnr,
+                banreti: d.banreti,
+                probsekt: getProbsektCode(d.probsekt_code),
+                leiter: d.leiter,
+                stangenschere: getStangenschereCode(d.stangenschere),
+                entnhoehe: d.new_entnhoehe,
+                probzust: getProbzustCode(d.new_probzust),
+                feld_bem: d.feld_bem,
+                ank_datum: jsToJodaDate(d.ank_datum),
+                bhu: d.new_bhu,
+                entnart: getEntartCode(d.new_entnart),
+                valbhu: getValidDefCode(d.new_valbhu),
+                valbhubem: d.valbhubem
+            };
+         });
+
+}
+
+var plotValue;
+
 $(function () {
     $('#lwfPlot').change(function() {
-       refreshAllData();
+          saveTempStateOfData();
+            var newVal = $(this).val();
+              if (!confirm("Are you sure you have no unsaved changes?")) {
+                $(this).val(plotValue); //set back
+                return;                  //abort!
+              }
+              //destroy branches
+              plotValue = newVal;
+              refreshAllData();
     });
 });
 
@@ -202,11 +253,6 @@ $.ajax({
              })}
   }
              );
-/*data[0].trees.map( x => { data[0].bgcTrees.filter(function (n){
-return (n.banreti === x.banreti);
-    }).map( y => {
- mergedData.push({...x, ...y});
-           })});*/
            console.log(mergedData);
 
   hotTree.destroy();
@@ -214,30 +260,6 @@ return (n.banreti === x.banreti);
   hotTreeSettings.data = mergedData;
   hotTree = new Handsontable($('#hotTrees')[0], hotTreeSettings);
   hotTree.render();
-/*
-    hotLiart.destroy();
-  //hotLiartdata = ;
-  hotLiartSettings.data = hotLiartdata.responseJSON.filter(function (n){
-                                                           return (parseInt(n.code)===selectedLiart && parseInt(n.liart_version)===selectedVersion);
-                                                       });;
-  hotLiart = new Handsontable($('#hotLiart')[0], hotLiartSettings);
-  hotLiart.render();
-    /*new Handsontable($('#example2')[0], {
-      data: data,
-      startRows: 8,
-      startCols: 7,
-      minSpareRows: 1,
-      colHeaders: ['CODE', 'TEXT', 'LIGRU','LIUGRU','LI_GATTUNG','LIART_VERSION'],
-      cells : function (row, col, prop) {
-      if(col === 3 || col ===4 ) {
-                  this.type = 'dropdown';
-                  var val = this.instance.getValue();
-                  if(typeof val != 'undefined') {
-                    this.source =  ['yellow', 'red', 'orange', 'green', 'blue', 'gray', 'black', 'white']; // to add to the beginning do this.source.unshift(val) instead
-                  }
-               }
-            }
-    });*/
   }
 }).fail(function() {
   console.log('Request failed, inspect arguments for details')
@@ -245,9 +267,15 @@ return (n.banreti === x.banreti);
 
 }
 
+/*function cleanTempJsonObject() {
+ Iterator keys = nutrientTemporaryData.keys();
+    while(keys.hasNext())
+    nutrientTemporaryData.remove(keys.next().toString());
+
+}*/
 
 $('#save').click(function () {
-
+    //cleanTempJsonObject();
     //hotGenf.alter("insert_row", 1,2);
         // save all cell's data
         var a = hotTree.validateCells(function (valid) {
@@ -273,7 +301,7 @@ $('#save').click(function () {
                 leiter: d.leiter,
                 stangenschere: getStangenschereCode(d.stangenschere),
                 entnhoehe: d.new_entnhoehe,
-                probzust: getProbzustCode(d.probzust),
+                probzust: getProbzustCode(d.new_probzust),
                 feld_bem: d.feld_bem,
                 ank_datum: jsToJodaDate(d.ank_datum),
                 bhu: d.new_bhu,

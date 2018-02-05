@@ -60,7 +60,7 @@ class BgcDataRepository  @Inject()(dbapi: DBApi) {
 
         val insertStatement =
           s"""insert into nae_feld_aufn_v1 (clnr, probdat, witterung, besteiger_nr, protokoll_nr, bemerkung, besteiger_nr2, protokoll_nr2)
-        values( ${nutrient.clnr}, ${probdatum}, ${nutrient.witterung.orNull}, ${nutrient.besteiger_nr}, ${nutrient.protokoll_nr}, ${nutrient.bemerkung.orNull}, ${nutrient.besteiger_nr2},${nutrient.protokoll_nr2})""".stripMargin
+        values( ${nutrient.clnr}, ${probdatum}, '${nutrient.witterung.orNull}', ${nutrient.besteiger_nr}, ${nutrient.protokoll_nr}, '${nutrient.bemerkung.orNull}', ${nutrient.besteiger_nr2},${nutrient.protokoll_nr2})""".stripMargin
 
         Logger.debug(s"statement to be executed: ${insertStatement}")
         stmt.executeUpdate(insertStatement)
@@ -73,7 +73,7 @@ class BgcDataRepository  @Inject()(dbapi: DBApi) {
           val insertStatement2 =
             s"""insert into nae_feld_dat_v (clnr, probdat, banreti, probsekt, leiter, stangenschere, entnhoehe, probzust,
                        feld_bem, ank_datum, bhu, entnart, valbhu, valbhubem)
-                       values (${m.clnr}, ${probdatum}, '${m.banreti}', '${m.probsekt}', ${m.leiter.orNull}, ${m.stangenschere.map(l=> "'" + l + "'" ).orNull}, ${m.entnhoehe.orNull},${m.probzust.orNull}, ${m.feld_bem.orNull}, ${ankerDatum}, ${m.bhu.orNull}, ${m.entnart.orNull}, ${m.valbhu.orNull}, ${m.valbhubem.orNull})""".stripMargin
+                       values (${m.clnr}, ${probdatum}, '${m.banreti}', '${m.probsekt}', '${m.leiter.orNull}', ${m.stangenschere.map(l=> "'" + l + "'" ).orNull}, ${m.entnhoehe.orNull},${m.probzust.orNull}, '${m.feld_bem.orNull}', ${ankerDatum}, ${m.bhu.orNull}, ${m.entnart.orNull}, ${m.valbhu.orNull}, '${m.valbhubem.orNull}')""".stripMargin
 
           Logger.debug(s"statement to be executed: ${insertStatement2}")
           stmt2.executeUpdate(insertStatement2)

@@ -18,8 +18,12 @@
 package auth
 
 import java.security.MessageDigest
+import java.sql.SQLException
 
 import auth.Conf._
+import com.unboundid.ldap.sdk._
+import com.unboundid.util.ssl.{SSLUtil, TrustAllTrustManager, TrustStoreTrustManager}
+import play.api.Logger
 import play.api.Play.current
 import play.api.cache.Cache
 
@@ -151,10 +155,17 @@ object LDAP {
       getUserDN(uid) match {
         case Some(dn) =>
           println("LDAP: binding " + uid + " hash=" + hash)
-          connectionPool
-            .bindAndRevertAuthentication(new SimpleBindRequest(dn,pass))
-            .getResultCode
-            .intValue()
+          try {
+            connectionPool
+              .bindAndRevertAuthentication(new SimpleBindRequest(dn, pass))
+              .getResultCode
+              .intValue()
+          } catch {
+            case ex: LDAPException => {
+              Logger.debug(s"Not valid password")
+            }
+              1
+          }
         case _ => 1
       }
     }

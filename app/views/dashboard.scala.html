@@ -2,10 +2,11 @@
 @(style: String = "scala", nutrient: play.api.data.Form[models.domain.NutrientsPlotInfo],allPlots: Seq[models.domain.beo.PlotExtended], allPers: Seq[models.domain.beo.Person], alltrees: Seq[models.domain.beo.TreeData])(implicit messages: Messages)
 
 @defining(play.core.PlayVersion.current) { version =>
-
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" media="screen" href="//handsontable.com/dist/handsontable.full.css">
 <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/main.css")" type="text/css">
 <script src="//handsontable.com/dist/handsontable.full.js"></script>
-<link rel="stylesheet" media="screen" href="//handsontable.com/dist/handsontable.full.css">
+
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
 
 
@@ -13,7 +14,10 @@
 
 <article>
         <h1>Welcome to LWF BGC Form</h1>
-        <p>
+    <p><a href="@routes.HomeController.logout()" style="float:right;" id="logoutLink">Log out!</a></p>
+    </br>
+    </br>
+    <p>
             Migrating the Oracle forms to web interface forms....
         </p>
         <blockquote>
@@ -21,7 +25,7 @@
             BGC Form
         </p>
         </blockquote>
-    <div class="container" id ="nutrient_form">
+    <br class="container" id ="nutrient_form">
 
         @helper.repeat(nutrient("nutrients"), min = 1) { stayField =>
         <div id="groupNutrientField">
@@ -42,7 +46,12 @@
                 <div id="hotTrees" class="hot handsontable htRowHeaders htColumnHeaders"></div>
             </div>
 
-        <button name="save" id="save" class="btn btn-primary pull-right">Save</button>
+    </br>
+    </br>
+
+    </br>
+
+    <button name="save" id="save" class="btn btn-success btn-lg">Save</button>
 
         }
 
@@ -61,16 +70,12 @@
  <aside>
    <h3>Browse</h3>
    <ul>
-     <li><a href="http://www.wsl.ch/info/organisation/fpo/lwf/index_EN">LWF Home Page</a></li>
+     <li><a href="https://www.wsl.ch/de/wald/waldentwicklung-und-monitoring/langfristige-waldoekosystemforschung-lwf.html">LWF Home Page</a></li>
+       <li><a href="https://www.wsl.ch/de/projekte/naehrstoffkreislaeufe-und-bodenvegetation.html">Nährstoffflüsse, Nährstoffversorgung und Bodenvegetation auf den LWF-Flächen</a></li>
+       <li><a href="https://www.wsl.ch/de/ueber-die-wsl/programme-und-initiativen/langfristige-waldoekosystemforschung-lwf/daten.html#tabelement1-tab4">Blattspiegelwerte</a></li>
+       <li><a href="https://www.wsl.ch/de/ueber-die-wsl/programme-und-initiativen/langfristige-waldoekosystemforschung-lwf/daten.html#tabelement1-tab5">Atmosphärische Deposition</a></li>
    </ul>
-   <h3>Download here</h3>
-   <ul>
-     <li><a id="getcsvAnchor" href="#">Click here to download the Data from chart</a></li>
-     <li><a href="https://playframework.com/documentation/@version/IDE">Click here to download Data for one year</a></li>
-     <li><a href="https://playframework.com/download#examples">Click here to download the full data</a>
-   </ul>
-
- </aside>
+   </aside>
 </div>
 
 

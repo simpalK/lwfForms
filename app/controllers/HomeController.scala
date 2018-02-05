@@ -2,10 +2,10 @@ package controllers
 
 import javax.inject._
 
+import auth.{Conf, LDAP, Security, User}
 import models.domain.beo._
 import models.domain.{FormatMessage, NutrientsPlotData, NutrientsPlotInfo}
 import models.services.BgcService
-import play.api.Logger
 import play.api.mvc._
 import play.api.data._
 import play.api.data.Forms._
@@ -14,6 +14,7 @@ import play.api.i18n.I18nSupport
 import play.api.i18n.MessagesApi
 import play.api.i18n.Messages.Implicits._
 import play.api.Play.current
+import play.api.{Logger, _}
 import play.api.i18n.Messages.Implicits._
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.routing.JavaScriptReverseRouter
@@ -23,7 +24,7 @@ import play.api.routing.JavaScriptReverseRouter
   * application's home page.
   */
 @Singleton
-class HomeController @Inject()(bgcService: BgcService) extends Controller {
+class HomeController @Inject()(bgcService: BgcService) extends Controller with Security {
 
   import java.util.Properties
 
@@ -77,6 +78,9 @@ class HomeController @Inject()(bgcService: BgcService) extends Controller {
     Ok(
       JavaScriptReverseRouter("jsRoutes")(
         routes.javascript.HomeController.index,
+        routes.javascript.HomeController.login,
+        routes.javascript.HomeController.authenticate,
+        routes.javascript.HomeController.logout,
         routes.javascript.HomeController.allPlotsData,
         routes.javascript.HomeController.allValidDefData,
         routes.javascript.HomeController.allProbeSektData,
@@ -86,43 +90,68 @@ class HomeController @Inject()(bgcService: BgcService) extends Controller {
     ).as("text/javascript")
   }
 
-  def index = Action { implicit request =>
 
-    Redirect(controllers.routes.HomeController.nutrients)
+  def index = HasRole(List(Conf.acg1)) {
+    uid => _ =>
+      Redirect(routes.HomeController.authenticate)
   }
 
-  def nutrients = Action { implicit request =>
-    NutrientsPlotData.nutrientsForm.bindFromRequest.fold(
-      errors => BadRequest(views.html.index(errors, allPlotExtended, allPers, alltrees)),
-      nutrient => Ok {
-        views.html.nutrients(nutrient)
-      }
-
-    )
+  def login = Action {
+    implicit request =>
+      Ok(views.html.login(User.loginForm))
   }
 
-  def allPlotsData(clnr: Int) = Action {
+  def logout = Action {
+     Redirect(routes.HomeController.login).withNewSession.flashing("success" -> "")
+  }
+
+  def untrail(path: String) = Action {
+    MovedPermanently("/" + path)
+  }
+
+  def authenticate = Action {
+    implicit request =>
+      User.loginForm.bindFromRequest.fold(
+        formWithErrors =>
+          BadRequest(views.html.login(formWithErrors)),
+        user =>
+          Redirect(routes.HomeController.nutrients)
+            .withSession("uid" -> user._1)
+      )
+  }
+
+
+  def nutrients =  IsAuthenticated { username => implicit request =>
+      NutrientsPlotData.nutrientsForm.bindFromRequest.fold(
+        errors => BadRequest(views.html.index(errors, allPlotExtended, allPers, alltrees)),
+        nutrient => Ok {
+          views.html.nutrients(nutrient)
+        }
+      )
+  }
+
+  def allPlotsData(clnr: Int) = IsAuthenticated { username => implicit request =>
     val treeData = allPlotExtended.filter(_.plot.clnr == clnr)
     Ok(Json.toJson(treeData))
   }
 
-  def allProbzustData() = Action {
+  def allProbzustData() = IsAuthenticated { username => implicit request =>
     Ok(Json.toJson(allProbzust))
   }
 
-  def allEntartData() = Action {
+  def allEntartData() = IsAuthenticated { username => implicit request =>
     Ok(Json.toJson(allEntart))
   }
 
-  def allProbeSektData() = Action {
+  def allProbeSektData() = IsAuthenticated { username => implicit request =>
     Ok(Json.toJson(allProbesekt))
   }
 
-  def allValidDefData() = Action {
+  def allValidDefData() = IsAuthenticated { username => implicit request =>
     Ok(Json.toJson(allValidDef))
   }
 
-  def saveNutrient = Action { implicit request =>
+  def saveNutrient = IsAuthenticated { username => implicit request =>
     // this will fail if the request body is not a valid json value
     val bodyAsJson = request.body.asJson.get
 
