@@ -2,6 +2,7 @@ package models.domain.beo
 
 import anorm.SqlParser.get
 import anorm.{RowParser, ~}
+import models.domain.NutrientsPlotInfo
 
 import scala.math.BigDecimal
 
@@ -23,4 +24,4 @@ object PlotData {
   }
 }
 
-case class PlotExtended(plot: Plot, trees: Seq[TreeData], bgcTrees: Seq[Naehrstoffe])
+case class PlotExtended(plot: Plot, trees: Seq[TreeData], bgcTrees: Seq[Naehrstoffe], bgcPlot: Seq[NutrientsPlotInfo])

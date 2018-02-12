@@ -14,11 +14,29 @@ object StringToDate {
 
   val bgcformatDate: DateTimeFormatter = DateTimeFormat.forPattern("dd-MM-yyyy HH:mm:ss")
 
+  val smallDateFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+
+  val jsDateFormat: DateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+
 
   def stringToDateConvert(date: String) = {
     //Logger.debug(s"input Date: $date")
     //Logger.debug(s"converted Date: ${formatDate.parseDateTime(date)}")
     bgcformatDate.parseDateTime(date)
+
+  }
+
+  def stringToDateJSConvert(date: String) = {
+    //Logger.debug(s"input Date: $date")
+    //Logger.debug(s"converted Date: ${formatDate.parseDateTime(date)}")
+    jsDateFormat.parseDateTime(date)
+
+  }
+
+  def stringToDateConvertWithDot(date: String) = {
+    //Logger.debug(s"input Date: $date")
+    //Logger.debug(s"converted Date: ${formatDate.parseDateTime(date)}")
+    smallDateFormat.parseDateTime(date)
 
   }
 

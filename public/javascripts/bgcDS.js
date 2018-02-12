@@ -30,7 +30,8 @@ var nutrientComplexData = {
 };
 
 
-var nutrientTemporaryData = {
+var nutrientUpdateData = {
+    oldProbDatumToUpdate: undefined,
     plotData: {
         clnr: undefined,
         probdat: undefined,
@@ -58,4 +59,3 @@ var nutrientTemporaryData = {
                 ]
             }
 };
-

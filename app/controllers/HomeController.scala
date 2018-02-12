@@ -6,6 +6,8 @@ import auth.{Conf, LDAP, Security, User}
 import models.domain.beo._
 import models.domain.{FormatMessage, NutrientsPlotData, NutrientsPlotInfo}
 import models.services.BgcService
+import models.util.StringToDate
+import org.joda.time.DateTime
 import play.api.mvc._
 import play.api.data._
 import play.api.data.Forms._
@@ -37,12 +39,16 @@ class HomeController @Inject()(bgcService: BgcService) extends Controller with S
   val alltrees = bgcService.getAllTrees
   val allProbesekt = bgcService.getProbeSekt
   val allNutrients = bgcService.getAllNutrientsData
+  val allBgcPlots = bgcService.findAllBgcPlots
   val allValidDef = bgcService.getValidDef
   val allPlotExtended = allplots.map(pl => {
     val treesOnThisPlot = alltrees.filter(_.clnr == pl.clnr)
+    val allBgcPlotsForClnr = allBgcPlots.filter(_.clnr == pl.clnr)
     val treeNutrientData = allNutrients.filter(_.clnr == pl.clnr).map(n => n.copy(ank_datum = None, feld_bem = None))
-    PlotExtended(pl, treesOnThisPlot, treeNutrientData)
+    PlotExtended(pl, treesOnThisPlot, treeNutrientData, allBgcPlotsForClnr)
   })
+
+
 
   val allProbzust = bgcService.getAllProbzust
   val allEntart = bgcService.getAllEntart
@@ -74,6 +80,9 @@ class HomeController @Inject()(bgcService: BgcService) extends Controller with S
   implicit val validDefWriter = Json.writes[ValidDef]
   implicit val validDefReader = Json.reads[ValidDef]
 
+  implicit val psrrsonWriter = Json.writes[Person]
+  implicit val psrrsonReader = Json.reads[Person]
+
   def javascriptRoutes = Action { implicit request =>
     Ok(
       JavaScriptReverseRouter("jsRoutes")(
@@ -82,6 +91,7 @@ class HomeController @Inject()(bgcService: BgcService) extends Controller with S
         routes.javascript.HomeController.authenticate,
         routes.javascript.HomeController.logout,
         routes.javascript.HomeController.allPlotsData,
+        routes.javascript.HomeController.allPersons,
         routes.javascript.HomeController.allValidDefData,
         routes.javascript.HomeController.allProbeSektData,
         routes.javascript.HomeController.allEntartData,
@@ -123,7 +133,8 @@ class HomeController @Inject()(bgcService: BgcService) extends Controller with S
 
   def nutrients =  IsAuthenticated { username => implicit request =>
       NutrientsPlotData.nutrientsForm.bindFromRequest.fold(
-        errors => BadRequest(views.html.index(errors, allPlotExtended, allPers, alltrees)),
+        errors =>
+          BadRequest(views.html.index(errors, allPlotExtended, allPers, alltrees)),
         nutrient => Ok {
           views.html.nutrients(nutrient)
         }
@@ -134,6 +145,17 @@ class HomeController @Inject()(bgcService: BgcService) extends Controller with S
     val treeData = allPlotExtended.filter(_.plot.clnr == clnr)
     Ok(Json.toJson(treeData))
   }
+
+  def allPlotsDataForDate(clnr: Int, forDate: String) = IsAuthenticated { username => implicit request => {
+    val pl = allplots.filter(_.clnr == clnr).headOption
+    val treesOnThisPlot = alltrees.filter(_.clnr == clnr)
+    val allBgcPlotsForClnr = allBgcPlots.filter(p => p.clnr == clnr && p.probdat == StringToDate.stringToDateConvertWithDot(forDate)).headOption.toSeq
+    val treeNutrientData = bgcService.getAllNutrientsDataForPlotOnDate(clnr, forDate)
+    val treeData = pl.map(PlotExtended(_, treesOnThisPlot, treeNutrientData, allBgcPlotsForClnr)).toSeq
+    Ok(Json.toJson(treeData))
+  }
+  }
+
 
   def allProbzustData() = IsAuthenticated { username => implicit request =>
     Ok(Json.toJson(allProbzust))
@@ -151,6 +173,10 @@ class HomeController @Inject()(bgcService: BgcService) extends Controller with S
     Ok(Json.toJson(allValidDef))
   }
 
+  def allPersons() = IsAuthenticated { username => implicit request =>
+    Ok(Json.toJson(allPers))
+  }
+
   def saveNutrient = IsAuthenticated { username => implicit request =>
     // this will fail if the request body is not a valid json value
     val bodyAsJson = request.body.asJson.get
@@ -158,6 +184,7 @@ class HomeController @Inject()(bgcService: BgcService) extends Controller with S
     (bodyAsJson \ "plotData").validate[NutrientsPlotInfo] match {
       case success: JsSuccess[NutrientsPlotInfo] => {
         val plot  = success.get
+        //var oldProbeDatum = (bodyAsJson \ "oldProbDatumToUpdate").get
         val errorList = bgcService.saveNutrientsInfo(plot)
         errorList.isEmpty match {
           case true => Ok ("Validation passed! data for clnr " + plot.clnr + "is saved successful")
@@ -170,6 +197,28 @@ class HomeController @Inject()(bgcService: BgcService) extends Controller with S
       }
     }
   }
+
+  def updateNutrient = IsAuthenticated { username => implicit request =>
+    // this will fail if the request body is not a valid json value
+    val bodyAsJson = request.body.asJson.get
+
+    (bodyAsJson \ "plotData").validate[NutrientsPlotInfo] match {
+      case success: JsSuccess[NutrientsPlotInfo] => {
+        val plot  = success.get
+        var oldProbeDatum = (bodyAsJson \ "oldProbDatumToUpdate").validate[DateTime].get
+        val errorList = bgcService.updateNutrientsInfo(plot, oldProbeDatum)
+        errorList.isEmpty match {
+          case true => Ok ("Validation passed! data for clnr " + plot.clnr + "is saved successful")
+          case _    => BadRequest(s"Data was not stored due to Oracle error! ${FormatMessage.formatErrorMessage(Seq((1, errorList)))}")
+        }
+      }
+      case JsError(error) => {
+        Logger.debug(s"errors: ${error}")
+        BadRequest(s"Validation failed! ${error.map(_._1.path.map(_.toString)).mkString("\n")}")
+      }
+    }
+  }
+
 
 }
 

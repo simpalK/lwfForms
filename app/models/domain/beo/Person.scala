@@ -4,7 +4,7 @@ package models.domain.beo
 import anorm.SqlParser.get
 import anorm.{RowParser, ~}
 
-case class Person(persnr: Integer, name: String, vorname: String)
+case class Person(persnr: Int, name: String, vorname: String)
 
 object PersonData {
   val parser: RowParser[Person] = {
