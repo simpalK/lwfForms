@@ -28,19 +28,32 @@ class BgcDataRepository  @Inject()(dbapi: DBApi) {
    def findAllpersons() : Seq[Person] = beodb.withConnection { implicit connection =>
      SQL("select persnr, name, vorname from pers order by name").as(PersonData.parser *)}
 
-   def findAllTrees(): Seq[TreeData] = beodb.withConnection { implicit connection =>
-      SQL("select ba.clnr, to_number(banreti) banreti, ab.text species, max(ba.umfang) umfang, max(a.bahoehe) bahoehe from ba,bwsi a, artbed ab where banreti > 9000 and banreti < 10000 and umfang is not null and a.banr = ba.banr and a.invnr = ba.invnr and ba.bart = ab.art and ba.sprache = ab.sprache group by ba.clnr,banreti,ab.text order by banreti").as(TreeData.parser *)}
+   /*def findAllTrees(): Seq[TreeData] = beodb.withConnection { implicit connection =>
+      SQL("select ba.clnr, to_number(banreti) banreti, ab.text species, max(ba.umfang) umfang, max(a.bahoehe) bahoehe from ba,bwsi a, artbed ab where banreti > 9000 and banreti < 10000 and umfang is not null and a.banr = ba.banr and a.invnr = ba.invnr and ba.bart = ab.art and ba.sprache = ab.sprache group by ba.clnr,banreti,ab.text order by banreti").as(TreeData.parser *)}*/
 
-   def findAllNutrients(): Seq[NutrientsPlotInfo] = bgcdb.withConnection { implicit connection =>
+  def findAllTrees(): Seq[TreeData] = beodb.withConnection { implicit connection =>
+    SQL("""select ba.clnr, to_number(banreti) banreti, ab.text species,i.invyear, (max(ba.umfang) over(partition by ba.banreti, ba.clnr, ba.invnr)) * 10 umfang, (max(a.bahoehe) over(partition by ba.banreti, ba.clnr, ba.invnr)) * 10 bahoehe
+    from ba,bwsi a, artbed ab,inv_info i
+    where banreti > 9000 and banreti < 10000 and a.banr = ba.banr
+  and a.invnr = ba.invnr and ba.bart = ab.art and ba.invnr in (29994,29995,29996,29997,29998,30057)
+  and ba.sprache = ab.sprache
+  and i.invnr in (29994,29995,29996,29997,29998,30057)
+  and i.type_of_plot = 'LWF' and a.invnr = ba.invnr
+  and i.invnr = ba.invnr
+  and i.clnr = ba.clnr
+  order by clnr, banreti""").as(TreeData.parser *)}
+
+
+  def findAllNutrients(): Seq[NutrientsPlotInfo] = bgcdb.withConnection { implicit connection =>
       SQL("select clnr, probdat, witterung, besteiger_nr, protokoll_nr, bemerkung, besteiger_nr2, protokoll_nr2 from nae_feld_aufn_v1").as(NutrientsPlotData.parser *)}
 
    def findAllNutrientsData(): Seq[Naehrstoffe] = bgcdb.withConnection { implicit connection =>
-     SQL("select clnr, to_number(banreti) banreti, probsekt, leiter, stangenschere, entnhoehe, probzust, feld_bem, ank_datum, bhu, entnart, valbhu, valbhubem from nae_feld_dat_v where to_char(probdat, 'yyyy') = to_char(sysdate, 'yyyy') -1").as(NaehrstoffeData.parser *)
+     SQL("select clnr, to_number(banreti) banreti, probsekt, leiter, stangenschere, entnhoehe, probzust, feld_bem, ank_datum, bhu, entnart, valbhu, valbhubem, anker from nae_feld_dat_v where to_char(probdat, 'yyyy') = to_char(sysdate, 'yyyy') -1").as(NaehrstoffeData.parser *)
    }
 
    def findAllNutrientsDataForPlotOnDate(clnr: Int, forDate: String): Seq[Naehrstoffe] = bgcdb.withConnection { implicit connection => {
-     SQL("""select clnr, to_number(banreti) banreti, probsekt, leiter, stangenschere, entnhoehe, probzust, feld_bem, ank_datum, bhu, entnart, valbhu, valbhubem from nae_feld_dat_v where clnr = {clnrnr} and to_char(probdat,'dd.mm.yyyy') =  {ofDate}""".stripMargin).on("clnrnr" -> clnr, "ofDate" -> forDate).as(NaehrstoffeData.parser *)
-   }
+     SQL("""select clnr, to_number(banreti) banreti, probsekt, leiter, stangenschere, entnhoehe, probzust, feld_bem, ank_datum, bhu, entnart, valbhu, valbhubem, anker from nae_feld_dat_v where clnr = {clnrnr} and to_char(probdat,'dd.mm.yyyy') =  {ofDate}""".stripMargin).on("clnrnr" -> clnr, "ofDate" -> forDate).as(NaehrstoffeData.parser *)
+    }
    }
 
   def getProbzust() = bgcdb.withConnection { implicit connection =>
@@ -56,7 +69,7 @@ class BgcDataRepository  @Inject()(dbapi: DBApi) {
     SQL("""select * from VALID""".stripMargin).as(ValidDefData.parser *)}
 
 
-  def saveNutrientData(nutrient: NutrientsPlotInfo): Option[BgcOracleError] = {
+  def saveNutrientData(nutrient: NutrientsPlotInfo, username: String): Option[BgcOracleError] = {
       val conn = bgcdb.getConnection()
       try {
         conn.setAutoCommit(false)
@@ -64,8 +77,8 @@ class BgcDataRepository  @Inject()(dbapi: DBApi) {
         val probdatum = s"to_date('${StringToDate.oracleDateFormat.print(nutrient.probdat)}', 'DD.MM.YYYY HH24:MI:SS')"
 
         val insertStatement =
-          s"""insert into nae_feld_aufn_v1 (clnr, probdat, witterung, besteiger_nr, protokoll_nr, bemerkung, besteiger_nr2, protokoll_nr2)
-        values( ${nutrient.clnr}, ${probdatum}, ${nutrient.witterung.map("'" + _ + "'").orNull}, ${nutrient.besteiger_nr}, ${nutrient.protokoll_nr}, ${nutrient.bemerkung.map("'" + _ + "'").orNull}, ${nutrient.besteiger_nr2},${nutrient.protokoll_nr2})""".stripMargin
+          s"""insert into nae_feld_aufn_v1 (clnr, probdat, witterung, besteiger_nr, protokoll_nr, bemerkung, besteiger_nr2, protokoll_nr2, einfuser, einfdat)
+        values( ${nutrient.clnr}, ${probdatum}, ${nutrient.witterung.map("'" + _ + "'").orNull}, ${nutrient.besteiger_nr.orNull}, ${nutrient.protokoll_nr.orNull}, ${nutrient.bemerkung.map("'" + _ + "'").orNull}, ${nutrient.besteiger_nr2.orNull},${nutrient.protokoll_nr2.orNull}, '${username}', sysdate)""".stripMargin
 
         Logger.debug(s"statement to be executed: ${insertStatement}")
         stmt.executeUpdate(insertStatement)
@@ -77,8 +90,8 @@ class BgcDataRepository  @Inject()(dbapi: DBApi) {
           val ankerDatum = s"to_date('${StringToDate.oracleDateFormat.print(nutrient.probdat)}', 'DD.MM.YYYY HH24:MI:SS')"
           val insertStatement2 =
             s"""insert into nae_feld_dat_v (clnr, probdat, banreti, probsekt, leiter, stangenschere, entnhoehe, probzust,
-                       feld_bem, ank_datum, bhu, entnart, valbhu, valbhubem)
-                       values (${m.clnr}, ${probdatum}, '${m.banreti}', '${m.probsekt}', ${m.leiter.map("'" + _ + "'").orNull}, ${m.stangenschere.map(l=> "'" + l + "'" ).orNull}, ${m.entnhoehe.orNull},${m.probzust.orNull}, ${m.feld_bem.map("'" + _ + "'").orNull}, ${ankerDatum}, ${m.bhu.orNull}, ${m.entnart.orNull}, ${m.valbhu.orNull}, ${m.valbhubem.map("'" + _ + "'").orNull})""".stripMargin
+                       feld_bem, ank_datum, bhu, entnart, valbhu, valbhubem,  einfuser, einfdat, anker)
+                       values (${m.clnr}, ${probdatum}, '${m.banreti}', '${m.probsekt}', ${m.leiter.map("'" + _ + "'").orNull}, ${m.stangenschere.map(l=> "'" + l + "'" ).orNull}, ${m.entnhoehe.orNull},${m.probzust.orNull}, ${m.feld_bem.map("'" + _ + "'").orNull}, ${ankerDatum}, ${m.bhu.orNull}, ${m.entnart.orNull}, ${m.valbhu.orNull}, ${m.valbhubem.map("'" + _ + "'").orNull}, '${username}', sysdate, ${m.anker.orNull})""".stripMargin
 
           Logger.debug(s"statement to be executed: ${insertStatement2}")
           stmt2.executeUpdate(insertStatement2)
@@ -109,7 +122,7 @@ class BgcDataRepository  @Inject()(dbapi: DBApi) {
 
 
 
-def updateNutrientData(nutrient: NutrientsPlotInfo, oldProbeDatum: DateTime): Option[BgcOracleError] = {
+def updateNutrientData(nutrient: NutrientsPlotInfo, oldProbeDatum: DateTime, username: String): Option[BgcOracleError] = {
   val conn = bgcdb.getConnection()
   try {
   conn.setAutoCommit(false)
@@ -121,10 +134,10 @@ def updateNutrientData(nutrient: NutrientsPlotInfo, oldProbeDatum: DateTime): Op
   nutrient.trees.map(m => {
     val ankerDatum = s"to_date('${StringToDate.oracleDateFormat.print(nutrient.probdat)}', 'DD.MM.YYYY HH24:MI:SS')"
     val updateStatement2 =
-      s"""update nae_feld_dat_v set (probdat,probsekt,leiter,stangenschere,entnhoehe,probzust,feld_bem,ank_datum,bhu,entnart,valbhu,valbhubem)
+      s"""update nae_feld_dat_v set (probdat,probsekt,leiter,stangenschere,entnhoehe,probzust,feld_bem,ank_datum,bhu,entnart,valbhu,valbhubem, updateuser, updatedate, anker)
            = (select ${probdatum}, '${m.probsekt}', ${m.leiter.map("'" + _ + "'").orNull}, ${m.stangenschere.map(l=> "'" + l + "'" ).orNull},
           ${m.entnhoehe.orNull}, ${m.probzust.orNull}, ${m.feld_bem.map("'" + _ + "'").orNull}, ${ankerDatum}, ${m.bhu.orNull}, ${m.entnart.orNull},
-                    ${m.valbhu.orNull}, ${m.valbhubem.map("'" + _ + "'").orNull} from dual)
+                    ${m.valbhu.orNull}, ${m.valbhubem.map("'" + _ + "'").orNull}, '${username}', sysdate, ${m.anker.orNull} from dual)
                        where clnr = ${m.clnr} and probdat = ${oldProbdatum} and banreti = '${m.banreti}' and probsekt = '${m.probsekt}'""".stripMargin
     Logger.debug(s"statement to be executed: ${updateStatement2}")
     stmt2.executeUpdate(updateStatement2)
@@ -133,13 +146,13 @@ def updateNutrientData(nutrient: NutrientsPlotInfo, oldProbeDatum: DateTime): Op
   stmt2.close()
 
   val updateStatement =
-  s"""update nae_feld_aufn_v1 set (witterung,probdat,besteiger_nr,protokoll_nr,bemerkung,besteiger_nr2,protokoll_nr2) = (SELECT ${nutrient.witterung.map("'" + _ + "'").orNull},
+  s"""update nae_feld_aufn_v1 set (witterung,probdat,besteiger_nr,protokoll_nr,bemerkung,besteiger_nr2,protokoll_nr2, updateuser, updatedate) = (SELECT ${nutrient.witterung.map("'" + _ + "'").orNull},
         ${probdatum},
         ${nutrient.besteiger_nr.orNull} ,
         ${nutrient.protokoll_nr.orNull} ,
         ${nutrient.bemerkung.map("'" + _ + "'").orNull},
         ${nutrient.besteiger_nr2.orNull},
-       ${nutrient.protokoll_nr2.orNull} from dual)
+       ${nutrient.protokoll_nr2.orNull}, '${username}', sysdate from dual)
       where clnr = ${nutrient.clnr} and probdat = ${oldProbdatum}""".stripMargin
 
   Logger.debug(s"statement to be executed: ${updateStatement}")

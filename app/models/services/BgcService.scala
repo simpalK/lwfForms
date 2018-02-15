@@ -33,8 +33,8 @@ class BgcService @Inject()(bgcRepo: BgcDataRepository) {
 
    def getValidDef = bgcRepo.getValidDef()
 
-   def saveNutrientsInfo(nutrient: NutrientsPlotInfo) = bgcRepo.saveNutrientData(nutrient)
+   def saveNutrientsInfo(nutrient: NutrientsPlotInfo, username: String) = bgcRepo.saveNutrientData(nutrient, username)
 
-   def updateNutrientsInfo(nutrient: NutrientsPlotInfo, oldProbeDatum: DateTime) = bgcRepo.updateNutrientData(nutrient, oldProbeDatum)
+   def updateNutrientsInfo(nutrient: NutrientsPlotInfo, oldProbeDatum: DateTime, username: String) = bgcRepo.updateNutrientData(nutrient, oldProbeDatum, username)
 
 }

@@ -36,7 +36,7 @@ class HomeController @Inject()(bgcService: BgcService) extends Controller with S
 
   val allplots = bgcService.getAllPlots
   val allPers = bgcService.getAllPersons
-  val alltrees = bgcService.getAllTrees
+  val alltrees = bgcService.getAllTrees.groupBy(t => (t.clnr, t.banreti)).map(_._2.maxBy(_.invnr)).toList
   val allProbesekt = bgcService.getProbeSekt
   val allNutrients = bgcService.getAllNutrientsData
   val allBgcPlots = bgcService.findAllBgcPlots
@@ -185,7 +185,7 @@ class HomeController @Inject()(bgcService: BgcService) extends Controller with S
       case success: JsSuccess[NutrientsPlotInfo] => {
         val plot  = success.get
         //var oldProbeDatum = (bodyAsJson \ "oldProbDatumToUpdate").get
-        val errorList = bgcService.saveNutrientsInfo(plot)
+        val errorList = bgcService.saveNutrientsInfo(plot, username)
         errorList.isEmpty match {
           case true => Ok ("Validation passed! data for clnr " + plot.clnr + "is saved successful")
           case _    => BadRequest(s"Data was not stored due to Oracle error! ${FormatMessage.formatErrorMessage(Seq((1, errorList)))}")
@@ -206,7 +206,7 @@ class HomeController @Inject()(bgcService: BgcService) extends Controller with S
       case success: JsSuccess[NutrientsPlotInfo] => {
         val plot  = success.get
         var oldProbeDatum = (bodyAsJson \ "oldProbDatumToUpdate").validate[DateTime].get
-        val errorList = bgcService.updateNutrientsInfo(plot, oldProbeDatum)
+        val errorList = bgcService.updateNutrientsInfo(plot, oldProbeDatum, username)
         errorList.isEmpty match {
           case true => Ok ("Validation passed! data for clnr " + plot.clnr + "is saved successful")
           case _    => BadRequest(s"Data was not stored due to Oracle error! ${FormatMessage.formatErrorMessage(Seq((1, errorList)))}")

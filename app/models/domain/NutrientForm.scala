@@ -46,7 +46,8 @@ object NutrientsPlotData {
           "bhu"-> optional(bigDecimal),
           "entnart"-> optional(number),
           "valbhu"-> optional(number),
-          "valbhubem" -> optional(text)
+          "valbhubem" -> optional(text),
+          "anker" -> optional(number)
       )(Naehrstoffe.apply)(Naehrstoffe.unapply))
     )(NutrientsPlotInfo.apply)(NutrientsPlotInfo.unapply)
   )

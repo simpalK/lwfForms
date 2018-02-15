@@ -112,7 +112,8 @@ var hotTreeSettings = {
                    {data: 'clnr',
                     readOnly: true},
                    {data: 'banreti',
-                    readOnly: true},
+                    readOnly: true
+                    },
                    {data: 'species',
                     readOnly: true},
                     {data: 'anker',
@@ -256,7 +257,7 @@ $.ajax({
  } else {
 
   $('#probedatum').attr('value',setProbeDatum(selectedSearchDate));
-  $('#witterung').attr('value',setWitterung(data[0].bgcPlot));
+  $('#witterung').attr('value', ( setWitterung(data[0].bgcPlot) != undefined) ? (setWitterung(data[0].bgcPlot)) : '');
     setProtokol1(setprotokollNr1(data[0].bgcPlot), data[0].bgcPlot);
     setProtokol2(setprotokollNr2(data[0].bgcPlot), data[0].bgcPlot);
     setBesteiger2(setBesteigerNr2(data[0].bgcPlot), data[0].bgcPlot);
@@ -278,15 +279,15 @@ $.ajax({
           var c3 = c2.map(function(d,i) { return {
                                                 clnr: d.clnr,
                                                 banreti: d.banreti,
+                                                anker: getAnkerVal(d.anker),
                                                 bahoehe: d.bahoehe,
                                                 species: d.species,
                                                 new_bhu: d.bhu,
                                                 bhu: undefined,
-                                                entnhoehe: d.entnhoehe,
+                                                entnhoehe: undefined,
                                                 probsekt: getProbsektText(d.probsekt),
                                                 leiter: d.leiter,
                                                 stangenschere: getStangenschereVal(d.stangenschere),
-                                                entnhoehe: undefined,
                                                 new_entnhoehe: d.entnhoehe,
                                                 probzust: getProbzustText(d.probzust),
                                                 feld_bem: d.feld_bem,
@@ -294,7 +295,7 @@ $.ajax({
                                                 entnart: getEntartText(d.entnart),
                                                 valbhu: getValidDefText(d.valbhu),
                                                 valbhubem: d.valbhubem,
-                                                umfang: d.umfang
+                                                umfang: getBeoLastYearVal(d.umfang, d.invnr)
 
                                             };
                                             });
@@ -357,21 +358,21 @@ $.ajax({
           var c3 = c2.map(function(d,i) { return {
                                                 clnr: d.clnr,
                                                 banreti: d.banreti,
-                                                bahoehe: d.bahoehe,
+                                                anker: getAnkerVal(d.anker),
+                                                bahoehe: getBeoLastYearVal(d.bahoehe, d.invnr),
                                                 species: d.species,
-                                                bhu: d.bhu,
-                                                entnhoehe: d.entnhoehe,
+                                                bhu: getBgcLastValue(d.bhu),
+                                                entnhoehe:  getBgcLastValue(d.entnhoehe),
                                                 probsekt: getProbsektText(d.probsekt),
                                                 leiter: d.leiter,
                                                 stangenschere: getStangenschereVal(d.stangenschere),
-                                                entnhoehe: d.entnhoehe,
                                                 probzust: getProbzustText(d.probzust),
                                                 feld_bem: d.feld_bem,
                                                 ank_datum: jsToJodaDate(d.ank_datum),
                                                 entnart: getEntartText(d.entnart),
                                                 valbhu: getValidDefText(d.valbhu),
                                                 valbhubem: d.valbhubem,
-                                                umfang: d.umfang
+                                                umfang: getBeoLastYearVal(d.umfang, d.invnr)
 
                                             };
                                             });
@@ -424,6 +425,7 @@ $('#update').click(function () {
        return {
                 clnr: d.clnr,
                 banreti: d.banreti,
+                anker: getAnkerCode(d.anker),
                 probsekt: getProbsektCode(d.probsekt),
                 leiter: d.leiter,
                 stangenschere: getStangenschereCode(d.stangenschere),
@@ -480,6 +482,7 @@ $('#save').click(function () {
        return {
                 clnr: d.clnr,
                 banreti: d.banreti,
+                anker: getAnkerCode(d.anker),
                 probsekt: getProbsektCode(d.probsekt),
                 leiter: d.leiter,
                 stangenschere: getStangenschereCode(d.stangenschere),
@@ -621,6 +624,25 @@ function getValidDefText(validef) {
         }
     }
 
+function getAnkerCode(anker) {
+    if(anker != 'undefined') {
+        if (anker === true) {
+            return 1;
+            } else {
+            return 0;
+            }
+        }
+    }
+
+ function getAnkerVal(anker) {
+    if(anker != 'undefined') {
+        if (anker === 1) {
+            return true;
+            } else {
+            return false;
+            }
+        }
+    }
  function jsToJodaDate(datum) {
     if(datum != null) {
         var res = datum.split("/");
@@ -777,3 +799,16 @@ function setBesteigerNr2(bgcPlots) {
           $('#besteiger1').val("Choose One").prop('selected', true);
       }
     }
+
+ function getBgcLastValue(value) {
+       if (value != 'undefined') {
+         var year = (new Date().getFullYear()) -1 ;
+         return value + '(' +  year + ')';
+         }
+ }
+
+ function getBeoLastYearVal(value, invnr) {
+          if(value != 'undefined') {
+            return value  + "(" + invnr + ")";
+          }
+ }

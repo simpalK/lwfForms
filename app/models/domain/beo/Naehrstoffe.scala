@@ -22,7 +22,8 @@ case class Naehrstoffe(clnr: Int,
                        bhu: Option[BigDecimal],
                        entnart: Option[Int],
                        valbhu: Option[Int],
-                       valbhubem: Option[String]
+                       valbhubem: Option[String],
+                       anker: Option[Int]
                    )
 
 object NaehrstoffeData {
@@ -39,10 +40,11 @@ object NaehrstoffeData {
       get[Option[BigDecimal]]("bhu") ~
       get[Option[Int]]("entnart") ~
       get[Option[Int]]("valbhu") ~
-      get[Option[String]]("valbhubem") map {
-      case clnr ~  banreti ~ probsekt ~ leiter ~ stangenschere ~ entnhoehe ~ probzust ~ feld_bem ~ ank_datum ~ bhu ~ entnart ~ valbhu ~ valbhubem  =>
+      get[Option[String]]("valbhubem") ~
+        get[Option[Int]]("anker") map {
+      case clnr ~  banreti ~ probsekt ~ leiter ~ stangenschere ~ entnhoehe ~ probzust ~ feld_bem ~ ank_datum ~ bhu ~ entnart ~ valbhu ~ valbhubem ~ anker =>
       {
-        Naehrstoffe(clnr , banreti , probsekt , leiter , stangenschere , entnhoehe , probzust , feld_bem , ank_datum, bhu , entnart , valbhu , valbhubem)
+        Naehrstoffe(clnr , banreti , probsekt , leiter , stangenschere , entnhoehe , probzust , feld_bem , ank_datum, bhu , entnart , valbhu , valbhubem, anker)
       }
     }
   }
