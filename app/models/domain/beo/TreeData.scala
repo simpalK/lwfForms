@@ -12,7 +12,8 @@ case class TreeData(clnr: Int,
                     species: Option[String],
                     umfang: Option[BigDecimal],
                     bahoehe: Option[BigDecimal],
-                    invnr: Int
+                    invnr: Int,
+                    bstat: Option[Int]
                     )
 
 object TreeData {
@@ -22,10 +23,11 @@ object TreeData {
       get[Option[String]]("species") ~
       get[Option[BigDecimal]]("umfang") ~
       get[Option[BigDecimal]]("bahoehe") ~
-      get[Int]("invyear") map {
-      case clnr~banreti ~ species ~ umfang ~ bahoehe ~ invnr =>
+      get[Int]("invyear") ~
+      get[Option[Int]]("bstat") map {
+      case clnr~banreti ~ species ~ umfang ~ bahoehe ~ invnr ~ bstat =>
       {
-        TreeData(clnr, banreti, species, umfang, bahoehe, invnr)
+        TreeData(clnr, banreti, species, umfang, bahoehe, invnr, bstat)
       }
     }
   }

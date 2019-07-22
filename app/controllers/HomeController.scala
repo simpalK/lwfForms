@@ -42,13 +42,11 @@ class HomeController @Inject()(bgcService: BgcService) extends Controller with S
   val allBgcPlots = bgcService.findAllBgcPlots
   val allValidDef = bgcService.getValidDef
   val allPlotExtended = allplots.map(pl => {
-    val treesOnThisPlot = alltrees.filter(_.clnr == pl.clnr)
+    val treesOnThisPlot = alltrees.filter(_.clnr == pl.clnr).filter(t => !t.bstat.contains(3,4))
     val allBgcPlotsForClnr = allBgcPlots.filter(_.clnr == pl.clnr)
     val treeNutrientData = allNutrients.filter(_.clnr == pl.clnr).map(n => n.copy(ank_datum = None, feld_bem = None))
     PlotExtended(pl, treesOnThisPlot, treeNutrientData, allBgcPlotsForClnr)
   })
-
-
 
   val allProbzust = bgcService.getAllProbzust
   val allEntart = bgcService.getAllEntart

@@ -32,27 +32,35 @@ class BgcDataRepository  @Inject()(dbapi: DBApi) {
       SQL("select ba.clnr, to_number(banreti) banreti, ab.text species, max(ba.umfang) umfang, max(a.bahoehe) bahoehe from ba,bwsi a, artbed ab where banreti > 9000 and banreti < 10000 and umfang is not null and a.banr = ba.banr and a.invnr = ba.invnr and ba.bart = ab.art and ba.sprache = ab.sprache group by ba.clnr,banreti,ab.text order by banreti").as(TreeData.parser *)}*/
 
   def findAllTrees(): Seq[TreeData] = beodb.withConnection { implicit connection =>
-    SQL("""select ba.clnr, to_number(banreti) banreti, ab.text species,i.invyear, (max(ba.umfang) over(partition by ba.banreti, ba.clnr, ba.invnr)) * 10 umfang, (max(a.bahoehe) over(partition by ba.banreti, ba.clnr, ba.invnr)) * 10 bahoehe
+    SQL("""select ba.clnr, to_number(banreti) banreti, ab.text species,i.invyear, (max(ba.umfang) over(partition by ba.banreti, ba.clnr, ba.invnr)) * 10 umfang, (max(a.bahoehe) over(partition by ba.banreti, ba.clnr, ba.invnr)) * 10 bahoehe, ba.bstat
     from ba,bwsi a, artbed ab,inv_info i
     where banreti > 9000 and banreti < 10000 and a.banr = ba.banr
-  and a.invnr = ba.invnr and ba.bart = ab.art and ba.invnr in (29994,29995,29996,29997,29998,30057)
-  and ba.sprache = ab.sprache
-  and i.invnr in (29994,29995,29996,29997,29998,30057)
-  and i.type_of_plot = 'LWF' and a.invnr = ba.invnr
-  and i.invnr = ba.invnr
-  and i.clnr = ba.clnr
-  order by clnr, banreti""").as(TreeData.parser *)}
+    and a.invnr = ba.invnr and ba.bart = ab.art and ba.invnr in (29994,29995,29996,29997,29998,30057)
+    and ba.sprache = ab.sprache
+    and i.invnr in (29994,29995,29996,29997,29998,30057)
+    and i.type_of_plot = 'LWF' and a.invnr = ba.invnr
+    and i.invnr = ba.invnr
+    and i.clnr = ba.clnr
+    order by clnr, to_number(banreti)""").as(TreeData.parser *)}
 
 
   def findAllNutrients(): Seq[NutrientsPlotInfo] = bgcdb.withConnection { implicit connection =>
       SQL("select clnr, probdat, witterung, besteiger_nr, protokoll_nr, bemerkung, besteiger_nr2, protokoll_nr2 from nae_feld_aufn_v1").as(NutrientsPlotData.parser *)}
 
    def findAllNutrientsData(): Seq[Naehrstoffe] = bgcdb.withConnection { implicit connection =>
-     SQL("select clnr, to_number(banreti) banreti, probsekt, leiter, stangenschere, entnhoehe, probzust, feld_bem, ank_datum, bhu, entnart, valbhu, valbhubem, anker from nae_feld_dat_v where to_char(probdat, 'yyyy') = to_char(sysdate, 'yyyy') -1").as(NaehrstoffeData.parser *)
+     SQL("""select n.clnr, to_number(n.banreti) banreti, n.probsekt, n.leiter, n.stangenschere, n.entnhoehe,
+              probzust, feld_bem, ank_datum, bhu, entnart, valbhu, valbhubem, anker,round(c.x) as x, round(c.y) as y
+       from nae_feld_dat_v n, beo.ba b, beo.cl c
+       where to_char(probdat, 'yyyy') = to_char(sysdate, 'yyyy') - 2
+       and n.clnr = b.clnr
+       and n.banreti = b.banreti
+       and b.baclnr = c.clnr
+       and b.invnr = 29999
+       order by clnr, to_number(banreti)""".stripMargin).as(NaehrstoffeData.parser *)
    }
 
    def findAllNutrientsDataForPlotOnDate(clnr: Int, forDate: String): Seq[Naehrstoffe] = bgcdb.withConnection { implicit connection => {
-     SQL("""select clnr, to_number(banreti) banreti, probsekt, leiter, stangenschere, entnhoehe, probzust, feld_bem, ank_datum, bhu, entnart, valbhu, valbhubem, anker from nae_feld_dat_v where clnr = {clnrnr} and to_char(probdat,'dd.mm.yyyy') =  {ofDate}""".stripMargin).on("clnrnr" -> clnr, "ofDate" -> forDate).as(NaehrstoffeData.parser *)
+     SQL("""select clnr, to_number(banreti) banreti, probsekt, leiter, stangenschere, entnhoehe, probzust, feld_bem, ank_datum, bhu, entnart, valbhu, valbhubem, anker from nae_feld_dat_v where clnr = {clnrnr} and to_char(probdat,'dd.mm.yyyy') =  {ofDate} order by clnr, to_number(banreti)""".stripMargin).on("clnrnr" -> clnr, "ofDate" -> forDate).as(NaehrstoffeData.parser *)
     }
    }
 

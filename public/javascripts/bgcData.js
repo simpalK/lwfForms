@@ -105,7 +105,7 @@ var hotTreeSettings = {
               maxRows: 22,
               rowHeaders: true,
               colHeaders: true,
-              colHeaders: [ 'clnr','banreti','species','anker','beo_umfang','bgc_last_bhu','new_bhu','probsekt','beo_hoehe','bgc_old_entnhoehe','entnhoehe','leiter' ,'stangenschere','probzust','feld_bem','ank_datum','entnart','valbhu','valbhubem'],
+              colHeaders: [ 'clnr','banreti','species','anker','beo_umfang','bgc_last_bhu','new_bhu','probsekt','beo_hoehe','bgc_old_entnhoehe','entnhoehe','leiter' ,'stangenschere','probzust','feld_bem','ank_datum','entnart','valbhu','valbhubem','x','y'],
               manualColumnResize: true,
               manualRowResize: true,
               columns: [
@@ -152,8 +152,11 @@ var hotTreeSettings = {
                    {data: 'valbhu',
                    type: 'autocomplete',
                     filter: false},
-                   {data: 'valbhubem'}
+                   {data: 'valbhubem'},
+                   {data: 'x'},
+                   {data: 'y'}
                    ],
+
                    cells : function (row, col, prop) {
                          if(col === 13) {
                             this.type = 'dropdown';
@@ -174,7 +177,8 @@ var hotTreeSettings = {
                             this.type = 'dropdown';
                             this.source =  hotProbSektData;
                             }
-                         }
+                         },
+                         licenseKey: "non-commercial-and-evaluation"
 
               };
 
@@ -295,8 +299,9 @@ $.ajax({
                                                 entnart: getEntartText(d.entnart),
                                                 valbhu: getValidDefText(d.valbhu),
                                                 valbhubem: d.valbhubem,
-                                                umfang: getBeoLastYearVal(d.umfang, d.invnr)
-
+                                                umfang: getBeoLastYearVal(d.umfang, d.invnr),
+                                                x: d.x,
+                                                y: d.y
                                             };
                                             });
           console.log(c3);
@@ -321,6 +326,11 @@ refreshAllData();
 }
 
 }
+
+function SortByID(x,y) {
+      return x.banreti - y.banreti;
+    }
+
 
 function refreshAllData() {
 $("#save").prop("disabled",false);
@@ -372,8 +382,9 @@ $.ajax({
                                                 entnart: getEntartText(d.entnart),
                                                 valbhu: getValidDefText(d.valbhu),
                                                 valbhubem: d.valbhubem,
-                                                umfang: getBeoLastYearVal(d.umfang, d.invnr)
-
+                                                umfang: getBeoLastYearVal(d.umfang, d.invnr),
+                                                x: d.x,
+                                                y: d.y
                                             };
                                             });
           console.log(c3);
@@ -381,8 +392,8 @@ $.ajax({
    console.log(mergedData);
 
   hotTree.destroy();
-  hotTreedata = c3;
-  hotTreeSettings.data = c3;
+  hotTreedata = c3.sort(SortByID);
+  hotTreeSettings.data = c3.sort(SortByID);
   hotTree = new Handsontable($('#hotTrees')[0], hotTreeSettings);
   hotTree.render();
   }
@@ -802,7 +813,7 @@ function setBesteigerNr2(bgcPlots) {
 
  function getBgcLastValue(value) {
        if (value != 'undefined') {
-         var year = (new Date().getFullYear()) -1 ;
+         var year = (new Date().getFullYear()) -2 ;
          return value + '(' +  year + ')';
          }
  }
@@ -812,3 +823,392 @@ function setBesteigerNr2(bgcPlots) {
             return value  + "(" + invnr + ")";
           }
  }
+
+
+ $(document).ready(function($) {
+     $( '#foliagePrint' ).click(function() {
+     var plotName = $('#lwfPlot option:selected').text();
+     if(plotName === 'Jussy') {
+            print_treeDataJussy();
+        } else {
+            print_treeData();
+        }
+     });
+ });
+
+ function append_json(data){
+             var table = document.getElementById('treeDataPrintTable');
+             data.forEach(function(object) {
+                 var tr = document.createElement('tr');
+                 tr.innerHTML = '<td>' + object.clnr + '</td>' +
+                 '<td>' + object.banreti + '</td>' +
+                 '<td>' + object.species + '</td>' +
+                 '<td>' + object.umfang + '</td>';
+                 table.appendChild(tr);
+             });
+         }
+
+function print_treeData() {
+             var treesData = hotTree.getSourceData();
+             var number_of_rows = treesData.length;
+             if(number_of_rows <=6 ) {
+               var k = 0;
+               var table_body = '<table style="border:2px solid black;width:100%" id="example">' +
+                    '<thead><tr>' +
+                    '<th style="border: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Banreti</th>' +
+                    '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Species</th>' +
+                    '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Ankerhöhe [m]</th>' +
+                    '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">BHU alt [mm]</th>' +
+                    //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Umfang</th>' +
+                    '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">BHU neu [mm]</th>' +
+                    '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Probesektor alt</th>' +
+                    '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Probesektor neu</th>' +
+                    //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Beo_Hoehe</th>' +
+                    '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">AlteEntn- hoehe[m]</th>' +
+                    '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Entn- hoehe[m]</th>' +
+                    //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Leiter</th>' +
+                    //'<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Stangen schere</th>' +
+                    '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Probe zustand</th>' +
+                    //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Entart</th>' +
+                    //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">ValBHU</th>' +
+                    '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;width:25%;word-wrap:break-word">Bemerkungen zum Probebaum</th>' +
+                    //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Val_bhu_Bem</th>' +
+                    '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">x / y</th>' +
+                    //'<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">y</th>' +
+                    '</tr></thead><tbody>';
+                    treesData.forEach(function(object) {
+                    table_body += '<tr>';
+                    table_body += '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + object.banreti + '</td>' +
+                                   '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px; background-color: #d9d9d9">' + object.species + '</td>' +
+                                   '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' ' + '</td>' +
+                                   '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px; background-color: #d9d9d9">' + (object.bhu === 'undefined(2018)' ? ' ' : object.bhu) + '</td>' +
+                                   //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + object.umfang + '</td>' +
+                                   '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' ' + '</td>' +
+                                   '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px; background-color: #d9d9d9">' + object.probsekt + '</td>' +
+                                   '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' '  + '</td>' +
+                                   //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + object.bahoehe + '</td>' +
+                                   '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px; background-color: #d9d9d9">' + (object.entnhoehe === 'undefined(2018)' ? ' ' : object.entnhoehe) + '</td>' +
+                                   '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' ' + '</td>' +
+                                   //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + (object.leiter === "undefined" ? ' ' : object.leiter) + '</td>' +
+                                   //'<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px">' + object.stangenschere + '</td>' +
+                                   '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' '  + '</td>' +
+                                   //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + (object.entnart === "undefined" ? ' ' : object.entnart) + '</td>' +
+                                   //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + (object.valbhu === "undefined" ? ' ' : object.valbhu)  + '</td>' +
+                                   //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + ' ' + '</td>' +
+                                   '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px;width:25%">' + ' ' + '</td>' +
+                                   '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + object.x + ' / ' + object.y + '</td>'
+                                   //'<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px">' + object.y + '</td>'
+                                   ;
+
+                    table_body+='</tr>';
+               })
+
+         table_body+='</tbody></table>';
+     var winPrint = window.open('', '', 'left=0,top=0,width=800,height=600,toolbar=0,scrollbars=0,status=0');
+     winPrint.document.write('<title>LWF BGC Form</title><br /><br /><h1> Protokoll Blattentnahme</h1><br />');
+     winPrint.document.body.setAttribute('style', 'font-size: 1vh');
+
+     winPrint.document.write('</head><body>' +
+        '<table style="border:2px solid black;width:100%">' +
+             '<tr>' +
+                 '<td> LWF Fläche &emsp;&emsp;&emsp; : &ensp;&ensp; ' + $('#lwfPlot option:selected').text() + '</td>' +
+                 '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                 '<td> Entnahmeart &emsp;&emsp;: <input type="checkbox" name="seil" value="Seil"> Seil <input type="checkbox" name="leiter" value="Leiter"> Leiter  <input type="checkbox" name="stangenschere" value="Stangenschere"> Stangenschere </td>' +
+                 '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+             '</tr>' +
+             '<tr>' +
+                  '<td> Probedatum &emsp;&emsp;&emsp; : ______/_______/_______________</td>' +
+                  '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                  '<td> Entnahmehöhe mit Messband gemessen (ankreuzen)       : <input type="checkbox" name="antnahmehohe">  </td>' +
+                  '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+              '</tr>' +
+              '<tr>' +
+                   '<td>Witterung &emsp;&emsp;&emsp;&emsp; : ______________________________</td>' +
+                   '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                   '<td> Zeitaufwand &emsp;&emsp;&emsp;: ______________________________ </td>' +
+                   '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+              '</tr>' +
+              '<tr>' +
+                   '<td> Besteiger Nr 1 &emsp;&emsp; : ______________________________</td>' +
+                   '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                   '<td> Besteiger Nr 2 &emsp;&emsp;: ______________________________</td>' +
+                   '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+               '</tr>' +
+               '<tr>' +
+                   '<td> Protokoll Nr 1 &emsp;&emsp; : ______________________________</td>' +
+                   '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                   '<td> Protokoll Nr 2 &emsp;&emsp;: ______________________________</td>' +
+                   '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+               '</tr>' +
+               '<tr>' +
+                   '<td> Ankeralter  &emsp;&emsp;&emsp; : ______________________________</td>' +
+                   '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                   '<td> Anker ersetzt &emsp;&emsp; : <input type="checkbox" name="ankerersetztYes"> yes <input type="checkbox" name="ankerersetztNo"> no </td>' +
+                   '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+               '</tr>' +
+             '</table>' +
+             '<br/>' +
+             '<h2> Probebäume</h2>' +
+             table_body +
+             '</table>' +
+             '<br />' +
+             '<table style="border:2px solid black;width:100%">' +
+                      '<tr>' +
+                          '<td> <h4> allgemeine Bemerkungen: </h4><br /></td>' +
+                      '</tr>' +
+                      '<tr>'  +
+                          '<td style="height:60px;"><br /></td>' +
+                      '</tr>' +
+          '</table>' +
+          '<br/><br/>' +
+           '</table>' +
+           '<p>In den Kühlraum (2°C) gebracht am _____/________/________um _____:______Uhr </p><br />' +
+         '</body></html>');
+     winPrint.document.close();
+     //append_json(treesData);
+     winPrint.focus();
+     winPrint.print();
+     winPrint.close();
+     } else {
+     print_treeDataJussy();
+     }
+     }
+
+
+     function print_treeDataJussy() {
+                  var treesData = hotTree.getSourceData();
+                  var mid = Math.round((treesData.length - 1) / 2);
+                  var secondSetArray = treesData.slice(0, mid);
+                  var firstSetArray = treesData.slice(mid, treesData.length);
+
+
+                  var number_of_rows = treesData.length;
+                    var k = 0;
+                    var table_body = '<table style="border:2px solid black;width:100%" id="example">' +
+                         '<thead><tr>' +
+                         '<th style="border: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Banreti</th>' +
+                         '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Species</th>' +
+                         '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Ankerhöhe [m]</th>' +
+                         '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">BHU alt [mm]</th>' +
+                         //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Umfang</th>' +
+                         '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">BHU neu [mm]</th>' +
+                         '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Probesektor alt</th>' +
+                         '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Probesektor neu</th>' +
+                         //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Beo_Hoehe</th>' +
+                         '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">AlteEntn- hoehe[m]</th>' +
+                         '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Entn- hoehe[m]</th>' +
+                         //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Leiter</th>' +
+                         //'<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Stangen schere</th>' +
+                         '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Probe zustand</th>' +
+                         //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Entart</th>' +
+                         //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">ValBHU</th>' +
+                         '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;width:25%;word-wrap:break-word">Bemerkungen zum Probebaum</th>' +
+                         //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Val_bhu_Bem</th>' +
+                         '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">x / y</th>' +
+                         //'<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">y</th>' +
+                         '</tr></thead><tbody>';
+                         secondSetArray.forEach(function(object) {
+                         table_body += '<tr>';
+                         table_body += '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + object.banreti + '</td>' +
+                                        '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px; background-color: #d9d9d9">' + object.species + '</td>' +
+                                        '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' ' + '</td>' +
+                                        '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px; background-color: #d9d9d9">' + (object.bhu === 'undefined(2018)' ? ' ' : object.bhu) + '</td>' +
+                                        //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + object.umfang + '</td>' +
+                                        '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' ' + '</td>' +
+                                        '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px; background-color: #d9d9d9">' + object.probsekt + '</td>' +
+                                        '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' '  + '</td>' +
+                                        //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + object.bahoehe + '</td>' +
+                                        '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px; background-color: #d9d9d9">' + (object.entnhoehe === 'undefined(2018)' ? ' ' : object.entnhoehe) + '</td>' +
+                                        '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' ' + '</td>' +
+                                        //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + (object.leiter === "undefined" ? ' ' : object.leiter) + '</td>' +
+                                        //'<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px">' + object.stangenschere + '</td>' +
+                                        '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' '  + '</td>' +
+                                        //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + (object.entnart === "undefined" ? ' ' : object.entnart) + '</td>' +
+                                        //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + (object.valbhu === "undefined" ? ' ' : object.valbhu)  + '</td>' +
+                                        //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + ' ' + '</td>' +
+                                        '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px;width:25%">' + ' ' + '</td>' +
+                                        '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + object.x + ' / ' + object.y + '</td>'
+                                        //'<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px">' + object.y + '</td>'
+                                        ;
+
+                         table_body+='</tr>';
+                    })
+
+              table_body+='</tbody></table>';
+
+
+                                  var table_body2 = '<table style="border:2px solid black;width:100%" id="example">' +
+                                       '<thead><tr>' +
+                                       '<th style="border: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Banreti</th>' +
+                                       '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Species</th>' +
+                                       '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Ankerhöhe [m]</th>' +
+                                       '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">BHU alt [mm]</th>' +
+                                       //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Umfang</th>' +
+                                       '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">BHU neu [mm]</th>' +
+                                       '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Probesektor alt</th>' +
+                                       '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Probesektor neu</th>' +
+                                       //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Beo_Hoehe</th>' +
+                                       '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">AlteEntn- hoehe[m]</th>' +
+                                       '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Entn- hoehe[m]</th>' +
+                                       //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Leiter</th>' +
+                                       //'<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Stangen schere</th>' +
+                                       '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">Probe zustand</th>' +
+                                       //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Entart</th>' +
+                                       //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">ValBHU</th>' +
+                                       '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;width:25%;word-wrap:break-word">Bemerkungen zum Probebaum</th>' +
+                                       //'<th style="border-bottom: 1px solid black;border-right: 1px solid black">Val_bhu_Bem</th>' +
+                                       '<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">x / y</th>' +
+                                       //'<th style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px;word-wrap:break-word">y</th>' +
+                                       '</tr></thead><tbody>';
+                                       firstSetArray.forEach(function(object) {
+                                       table_body2 += '<tr>';
+                                       table_body2 += '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + object.banreti + '</td>' +
+                                                      '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px; background-color: #d9d9d9">' + object.species + '</td>' +
+                                                      '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' ' + '</td>' +
+                                                      '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px; background-color: #d9d9d9">' + (object.bhu === 'undefined(2018)' ? ' ' : object.bhu) + '</td>' +
+                                                      //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + object.umfang + '</td>' +
+                                                      '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' ' + '</td>' +
+                                                      '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px; background-color: #d9d9d9">' + object.probsekt + '</td>' +
+                                                      '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' '  + '</td>' +
+                                                      //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + object.bahoehe + '</td>' +
+                                                      '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px; background-color: #d9d9d9">' + (object.entnhoehe === 'undefined(2018)' ? ' ' : object.entnhoehe) + '</td>' +
+                                                      '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' ' + '</td>' +
+                                                      //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + (object.leiter === "undefined" ? ' ' : object.leiter) + '</td>' +
+                                                      //'<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px">' + object.stangenschere + '</td>' +
+                                                      '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + ' '  + '</td>' +
+                                                      //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + (object.entnart === "undefined" ? ' ' : object.entnart) + '</td>' +
+                                                      //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + (object.valbhu === "undefined" ? ' ' : object.valbhu)  + '</td>' +
+                                                      //'<td style="border-bottom: 1px solid black;border-right: 1px solid black">' + ' ' + '</td>' +
+                                                      '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px;width:25%">' + ' ' + '</td>' +
+                                                      '<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:90px">' + object.x + ' / ' + object.y + '</td>'
+                                                      //'<td style="border-bottom: 1px solid black;border-right: 1px solid black;height:50px">' + object.y + '</td>'
+                                                      ;
+
+                                       table_body2+='</tr>';
+                                  })
+
+                            table_body2+='</tbody></table>';
+          var winPrint = window.open('', '', 'left=0,top=0,width=800,height=600,toolbar=0,scrollbars=0,status=0');
+          winPrint.document.write('<title>LWF BGC Form</title><br /><br /><h1> Protokoll Blattentnahme</h1><br />');
+          winPrint.document.body.setAttribute('style', 'font-size: 1vh');
+
+          winPrint.document.write('</head><body>' +
+             '<table style="border:2px solid black;width:100%">' +
+                  '<tr>' +
+                      '<td> LWF Fläche &emsp;&emsp;&emsp; : &ensp;&ensp; ' + $('#lwfPlot option:selected').text() + '</td>' +
+                      '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                      '<td> Entnahmeart &emsp;&emsp;: <input type="checkbox" name="seil" value="Seil"> Seil <input type="checkbox" name="leiter" value="Leiter"> Leiter  <input type="checkbox" name="stangenschere" value="Stangenschere"> Stangenschere </td>' +
+                      '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                  '</tr>' +
+                  '<tr>' +
+                       '<td> Probedatum &emsp;&emsp;&emsp; : ______/_______/_______________</td>' +
+                       '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                       '<td> Entnahmehöhe mit Messband gemessen (ankreuzen)       : <input type="checkbox" name="antnahmehohe">  </td>' +
+                       '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                   '</tr>' +
+                   '<tr>' +
+                        '<td>Witterung &emsp;&emsp;&emsp;&emsp; : ______________________________</td>' +
+                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                        '<td> Zeitaufwand &emsp;&emsp;&emsp;: ______________________________ </td>' +
+                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                   '</tr>' +
+                   '<tr>' +
+                        '<td> Besteiger Nr 1 &emsp;&emsp; : ______________________________</td>' +
+                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                        '<td> Besteiger Nr 2 &emsp;&emsp;: ______________________________</td>' +
+                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                    '</tr>' +
+                    '<tr>' +
+                        '<td> Protokoll Nr 1 &emsp;&emsp; : ______________________________</td>' +
+                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                        '<td> Protokoll Nr 2 &emsp;&emsp;: ______________________________</td>' +
+                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                    '</tr>' +
+                    '<tr>' +
+                        '<td> Ankeralter  &emsp;&emsp;&emsp; : ______________________________</td>' +
+                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                         '<td> Anker ersetzt &emsp;&emsp; : <input type="checkbox" name="ankerersetztYes"> yes <input type="checkbox" name="ankerersetztNo"> no </td>' +
+                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                    '</tr>' +
+                  '</table>' +
+                  '<br/>' +
+                  '<h2> Probebäume</h2>' +
+                  table_body +
+                  '</table>' +
+                  '<br />' +
+                  '<table style="border:2px solid black;width:100%">' +
+                           '<tr>' +
+                               '<td> <h4> allgemeine Bemerkungen: </h4><br /></td>' +
+                           '</tr>' +
+                           '<tr>'  +
+                               '<td style="height:60px;"><br /></td>' +
+                           '</tr>' +
+               '</table>' +
+               '<br/><br/>' +
+                '</table>' +
+                '<p>In den Kühlraum (2°C) gebracht am _____/________/________um _____:______Uhr </p><br />' +
+                 '<br/><br/><br/><br/> <br/><br/><br/><br/><br/><br/><br/><br/>' +
+                 '<br/><br/><br/><br/> <br/><br/><br/><br/><br/><br/><br/><br/>' +
+
+                 '<table style="border:2px solid black;width:100%">' +
+                                  '<tr>' +
+                                      '<td> LWF Fläche &emsp;&emsp;&emsp; : &ensp;&ensp; ' + $('#lwfPlot option:selected').text() + '</td>' +
+                                      '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                                      '<td> Entnahmeart &emsp;&emsp;: <input type="checkbox" name="seil" value="Seil"> Seil <input type="checkbox" name="leiter" value="Leiter"> Leiter  <input type="checkbox" name="stangenschere" value="Stangenschere"> Stangenschere </td>' +
+                                      '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                                  '</tr>' +
+                                  '<tr>' +
+                                       '<td> Probedatum &emsp;&emsp;&emsp; : ______/_______/_______________</td>' +
+                                       '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                                       '<td> Entnahmehöhe mit Messband gemessen (ankreuzen)       : <input type="checkbox" name="antnahmehohe">  </td>' +
+                                       '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                                   '</tr>' +
+                                   '<tr>' +
+                                        '<td>Witterung &emsp;&emsp;&emsp;&emsp; : ______________________________</td>' +
+                                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                                        '<td> Zeitaufwand &emsp;&emsp;&emsp;: ______________________________ </td>' +
+                                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                                   '</tr>' +
+                                   '<tr>' +
+                                        '<td> Besteiger Nr 1 &emsp;&emsp; : ______________________________</td>' +
+                                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                                        '<td> Besteiger Nr 2 &emsp;&emsp;: ______________________________</td>' +
+                                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                                    '</tr>' +
+                                    '<tr>' +
+                                        '<td> Protokoll Nr 1 &emsp;&emsp; : ______________________________</td>' +
+                                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                                        '<td> Protokoll Nr 2 &emsp;&emsp;: ______________________________</td>' +
+                                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                                    '</tr>' +
+                                    '<tr>' +
+                                        '<td> Ankeralter  &emsp;&emsp;&emsp; : ______________________________</td>' +
+                                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                                        '<td> Anker ersetzt &emsp;&emsp; : <input type="checkbox" name="ankerersetztYes"> yes <input type="checkbox" name="ankerersetztNo"> no </td>' +
+                                        '<td> &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp; </td>' +
+                                    '</tr>' +
+                                  '</table>' +
+                                  '<br/>' +
+                                  '<h2> Probebäume</h2>' +
+                                  table_body2 +
+                                  '</table>' +
+                                  '<br />' +
+                                  '<table style="border:2px solid black;width:100%">' +
+                                           '<tr>' +
+                                               '<td> <h4> allgemeine Bemerkungen: </h4><br /></td>' +
+                                           '</tr>' +
+                                           '<tr>'  +
+                                               '<td style="height:60px;"><br /></td>' +
+                                           '</tr>' +
+                               '</table>' +
+                               '<br/><br/>' +
+                                '</table>' +
+                                '<p>In den Kühlraum (2°C) gebracht am _____/________/________um _____:______Uhr </p><br />' +
+
+              '</body></html>');
+          winPrint.document.close();
+          //append_json(treesData);
+          winPrint.focus();
+          winPrint.print();
+          winPrint.close();
+          }
